@@ -37,6 +37,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         next();
 
     } catch (err: any) {
-        throw new ApiError(401, 'authentication failed');
+        if (err instanceof ApiError) 
+            throw err;
+        throw new ApiError(500, "login failed");
     }
 }
