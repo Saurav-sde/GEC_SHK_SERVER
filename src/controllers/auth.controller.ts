@@ -52,7 +52,8 @@ export const loginUser = asyncHandler(
 
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            sameSite: "strict",
+            secure: false,
+            sameSite: "lax",
             maxAge: 15 * 60 * 1000
         });
 
