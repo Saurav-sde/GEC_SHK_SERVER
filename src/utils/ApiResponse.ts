@@ -1,3 +1,4 @@
+import type { Response } from "express";
 class ApiResponse<T = any> {
   statusCode: number;
   data: T;
@@ -13,3 +14,13 @@ class ApiResponse<T = any> {
 }
 
 export { ApiResponse };
+
+
+export const sendResponse = <T>(
+  res: Response,
+  statusCode: number,
+  data: T,
+  message = "Success"
+) => {
+  return res.status(statusCode).json(new ApiResponse(statusCode, data, message));
+};
