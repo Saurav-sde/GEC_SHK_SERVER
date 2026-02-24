@@ -30,6 +30,20 @@ enum AdmissionType {
   LATERAL_ENTRY
 }
 
+enum FileVisibility {
+  PRIVATE
+  ENROLLED
+  PUBLIC
+}
+
+enum EntityType {
+  ADMISSION
+  ATTENDANCE
+  COURSE 
+  ASSIGNMENT
+  QUIZ
+}
+
 
 model User {
   id Int @id @default(autoincrement())
@@ -43,6 +57,8 @@ model User {
   student Student?
   faculty Faculty?
   admin Admin?
+
+  file File[]
 }
 
 
@@ -55,7 +71,7 @@ model Department {
   updatedAt DateTime @updatedAt
   isActive Boolean @default(true)
 
-  hod Faculty? @relation("HOD",fields: [hodId], references: [id])
+  hod Faculty? @relation("HOD",fields: [hodId], references: [id], onDelete: SetNull)
   hodId Int? @unique
 
   students Student[]
@@ -146,8 +162,32 @@ model Admin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
   userId Int @unique
+  user User @relation(fields: [userId], references: [id])
 }
 
 
+model File {
+  id String @id @default(uuid())
+
+  fileName String
+  originalName String
+  s3Key String @unique
+  mimeType String
+  size Int?
+
+  uploadedBy Int
+  uploader User @relation(fields: [uploadedBy], references: [id])
+  
+  ownerId Int?
+
+  entityType EntityType
+  entityId String
+
+  category String
+  visibility FileVisibility @default(PRIVATE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
