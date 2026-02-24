@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -b",
-    "start" : "node dist/src/index.js",
+    "start": "node dist/src/index.js",
     "dev": "npm run build && npm run start"
   },
   "keywords": [],
@@ -17,7 +17,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/node": "^25.2.3",
     "@types/pg": "^8.16.0",
-    "prisma": "^7.4.0",
+    "prisma": "^7.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
