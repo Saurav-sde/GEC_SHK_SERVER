@@ -67,7 +67,7 @@ export const registerStudent = asyncHandler(
         // fetch the details from body
         const body = req.body as StudentRegisterInput;
         let {
-            email, password, rollNo, regNo, name, parentName, parentPhoneNo, phoneNo, gender, hosteller, admissionDate, admissionType, deptId, semId, batchId
+            email, rollNo, regNo, name, parentName, parentPhoneNo, phoneNo, gender, hosteller, admissionDate, admissionType, deptId, semId, batchId
         } = body;
 
         const result = await prisma.$transaction(async (tx) => {
@@ -111,6 +111,7 @@ export const registerStudent = asyncHandler(
             }
 
             // hash the pass
+            const password = `Shk${rollNo}`;
             const hashedPassword = await bcrypt.hash(password, 10);
             // create user
             const newUser = await tx.user.create({
@@ -128,7 +129,7 @@ export const registerStudent = asyncHandler(
                     parentName,
                     parentPhoneNo,
                     rollNo,
-                    regNo,
+                    // regNo,
                     gender,
                     hosteller,
                     admissionDate,
