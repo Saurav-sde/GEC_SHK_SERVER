@@ -4,6 +4,7 @@ import { generateGetPresignedUrl, generatePutPresignedUrl } from "../services/s3
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse, sendResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { prisma } from "../config/prisma.js";
 
 
 export const getUploadUrl = asyncHandler(
@@ -15,7 +16,31 @@ export const getUploadUrl = asyncHandler(
         if(!presignedUrl)
             throw new ApiError(500, 'unable to generate presigned url');
 
-        return sendResponse(res, 201, { url: presignedUrl.url, key: presignedUrl.key }, 'url generated successfully');    
+        // store meta data in the db
+        const file = await prisma.file.create({
+            data: {
+                fileName: presignedUrl.url,
+                originalName: body.fileName,
+                s3Key: presignedUrl.url,
+                mimeType: body.contentType,
+                ...(req.user?.id && { uploadedBy: req.user.id }),
+                size: Number(body.size)
+            }
+        });
+
+        if(body.entity === "admission") {
+            const job = await prisma.studentUploadJob.create({
+                data: {
+                    uploadedBy: req.user!.id,
+                    fileId: file.id
+                }
+            });
+        }
+
+        return sendResponse(res, 201, { 
+            url: presignedUrl.url, 
+            key: presignedUrl.key, 
+        }, 'url generated successfully');    
     }
 )
 
