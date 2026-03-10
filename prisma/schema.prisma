@@ -59,8 +59,8 @@ model User {
   admin Admin?
 
   file File[]
+  studentUploadJob StudentUploadJob[]
 }
-
 
 // academic structure
 model Department {
@@ -112,7 +112,7 @@ model Student {
   parentName String
   parentPhoneNo String 
   rollNo String @unique
-  regNo String @unique
+  regNo String? @unique
   section String @default("A")
   gender Gender
 
@@ -168,7 +168,7 @@ model Admin {
 
 
 model File {
-  id String @id @default(uuid())
+  id Int @id @default(autoincrement())
 
   fileName String
   originalName String
@@ -178,16 +178,67 @@ model File {
 
   uploadedBy Int
   uploader User @relation(fields: [uploadedBy], references: [id])
+
+  studentUploadFile StudentUploadJob[]
   
-  ownerId Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-  entityType EntityType
-  entityId String
 
-  category String
-  visibility FileVisibility @default(PRIVATE)
+model StudentUploadJob {
+  id Int @id @default(autoincrement())
+  
+  uploadedBy Int
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  fileId Int
+  file File @relation(fields: [fileId], references: [id])
+
+  totalRecords Int @default(0)
+  validRecords Int @default(0)
+  invalidRecords Int @default(0)
+
+  insertedRecords Int @default(0)
+  failedRecords Int @default(0)
+
+  status String @default("PROCESSING")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  validationFailures StudentVerificationFailure[]
+  insertionFailures StudentInsertionFailure[]
+}
+
+
+model StudentVerificationFailure {
+  id Int @id @default(autoincrement())
+
+  jobId Int
+  job StudentUploadJob @relation(fields: [jobId], references: [id])
+
+  rowNumber Int
+  errorReason String
+
+  rawData Json
+
+  createdAt DateTime @default(now())
+}
+
+
+model StudentInsertionFailure {
+  id Int @id @default(autoincrement())
+
+  jobId Int
+  job StudentUploadJob @relation(fields: [jobId], references: [id])
+
+  email String?
+  rollNo String?
+  regNo String?
+
+  errorReason String
+  rawData Json
+
+  createdAt DateTime @default(now())
 }
