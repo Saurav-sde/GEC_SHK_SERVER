@@ -33,7 +33,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
         if(!user)
             throw new ApiError(401, 'user not found');
-        req.user = {id, role};
+        req.user = {email:user.email, id, role};
         next();
 
     } catch (err: any) {
