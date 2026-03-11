@@ -34,3 +34,26 @@ export const userLoginSchema = z.object({
         password: z.string()
     })
 });
+
+
+export const facultyRegisterSchema = z.object({
+    body:z.object({
+      email: z.string().email(),
+      password: z.string(),
+      name: z.string().min(2),
+      phoneNo: z.string(),
+      regNo: z.string(),
+      deptId: z.number(),
+      isHOD: z.boolean()
+    })
+});
+
+
+export const adminRegisterSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    password: z.string(),
+    name: z.string(),
+    phoneNo: z.string()
+  })
+});
