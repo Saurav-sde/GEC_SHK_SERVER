@@ -9,12 +9,15 @@ export const globalErrorHandler = (
 ) => {
   console.error("🔥 Error:", err);
 
-  // Prisma duplicate error
+  // Prisma known errors
+  // UNIQUE constraint error
   if (err.code === "P2002") {
+    const fields = (err.meta.driverAdapterError.cause.constraint.fields as string[])?.join(", ");
+
     return res.status(409).json({
       success: false,
-      message: "Duplicate entry",
-      errors: err.meta,
+      message: `Duplicate value for ${fields}`,
+      errors: err.meta
     });
   }
 

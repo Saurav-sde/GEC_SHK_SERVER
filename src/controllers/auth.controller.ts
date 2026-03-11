@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma.js";
-import type { StudentRegisterInput, userLoginInput } from "../types/auth.types.js";
+import type { AdminRegisterInput, FacultyRegisterInput, StudentRegisterInput, userLoginInput } from "../types/auth.types.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse, sendResponse } from "../utils/ApiResponse.js";
 import type { Request, Response, NextFunction } from "express";
@@ -40,7 +40,7 @@ export const loginUser = asyncHandler(
             throw new ApiError(401, 'invalid credentials');
 
         // send the access and refresh token
-        const payload = { id: user.id, role: user.role };
+        const payload = { email: email, id: user.id, role: user.role };
         const accessToken = jwt.sign(
             payload,
             env.JWT_ACCESS_TOKEN_SECRET,
@@ -57,7 +57,7 @@ export const loginUser = asyncHandler(
             maxAge: 15 * 60 * 1000
         });
 
-        return sendResponse(res, 200, { user: payload }, "login successful")
+        return sendResponse(res, 200, payload, "login successful")
     }
 )
 
@@ -69,6 +69,15 @@ export const registerStudent = asyncHandler(
         let {
             email, rollNo, regNo, name, parentName, parentPhoneNo, phoneNo, gender, hosteller, admissionDate, admissionType, deptId, semId, batchId
         } = body;
+
+        // normalize the input
+        email = email.trim().toLowerCase();
+        rollNo = rollNo.trim().toUpperCase();
+        regNo = regNo?.trim().toUpperCase();
+        phoneNo = phoneNo.trim();
+        parentPhoneNo = parentPhoneNo.trim();
+        name = name.trim();
+        parentName = parentName.trim();
 
         const result = await prisma.$transaction(async (tx) => {
 
@@ -85,9 +94,13 @@ export const registerStudent = asyncHandler(
             // check duplicate student based on phoneNo or rollNo or regNo
             const existingStudent = await tx.student.findFirst({
                 where: {
-                    OR: [{phoneNo}, {rollNo}, {regNo}]
+                    OR: [
+                        {phoneNo}, 
+                        {rollNo}, 
+                        ...(regNo ? [{regNo}]: [])
+                    ]
                 },
-            })
+            });
 
             if (existingStudent)
                 throw new ApiError(409, "student data already exists");
@@ -129,7 +142,7 @@ export const registerStudent = asyncHandler(
                     parentName,
                     parentPhoneNo,
                     rollNo,
-                    // regNo,
+                    regNo: regNo ?? undefined,
                     gender,
                     hosteller,
                     admissionDate,
@@ -140,23 +153,171 @@ export const registerStudent = asyncHandler(
                     userId: newUser.id
                 }
             });
-
-            return { newUser, newStudent };
         });
 
         return sendResponse(
             res,
             201,
-            {
-                id: result.newStudent.id,
-                email: result.newUser.email
-            },
+            {},
             "student registered successfully"
         );
     }
 )
 
+export const checkMe = asyncHandler(
+    async(req: Request, res: Response) => {
+        const email = req.user?.email;
+        const userId = req.user?.id;
+        const role = req.user?.role;
 
+        if(!email || !userId || !role) 
+            throw new ApiError(401, "something went wrong")
+
+        let profile = null;
+
+        if(role === "STUDENT") {
+            profile = await prisma.student.findUnique({
+                where: {userId: userId},
+                select: {
+                    id: true,
+                    name: true,
+                    phoneNo: true,
+                    regNo: true
+                }
+            })
+        } else if(role === "FACULTY") {
+            profile = await prisma.faculty.findUnique({
+                where: {userId: userId},
+                select: {
+                    id: true,
+                    name: true,
+                    phoneNo: true,
+                    regNo: true
+                }
+            })
+        } else {
+            profile = await prisma.admin.findUnique({
+                where: {userId: userId},
+                select: {
+                    id: true,
+                    name: true,
+                    phoneNo: true
+                }
+            })
+        }
+
+        const reply = {
+            userId,
+            email,
+            role,
+            profile
+        }
+
+        sendResponse(res, 200, reply , "user authenticated successfully");
+
+    }
+)
+
+
+export const registerFaculty = asyncHandler(
+    async (req: Request, res: Response) => {
+        const body = req.body as FacultyRegisterInput;
+
+        let {email, name, phoneNo, regNo, deptId, isHOD, password } = body;
+
+        // normalize the input
+        email = email.trim().toLowerCase();
+        name = name.trim();
+        phoneNo = phoneNo.trim(),
+        regNo = regNo.trim().toUpperCase();
+
+        const result = await prisma.$transaction(async(tx) => {
+
+            // check if dept exists or not
+            const dept = await tx.department.findUnique({
+                where: {
+                    id: deptId
+                }
+            });
+
+            if(!dept)
+                throw new ApiError(400, "invalid department");
+
+            // hash the pass
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // create user
+            const newUser = await tx.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    role: "FACULTY"
+                }
+            })
+
+            // create faculty
+            const newFaculty = await tx.faculty.create({
+                data: {
+                    name,
+                    phoneNo,
+                    regNo,
+                    userId: newUser.id,
+                    deptId
+                }
+            })
+            
+            // update department if faculty is hod
+            if(isHOD) {
+                const updatedDept = await tx.department.update({
+                    where: {
+                        id: deptId
+                    },
+                    data: {
+                        hodId: newFaculty.id
+                    }
+                })
+            }
+        });
+
+        return sendResponse(res, 201, {}, "faculty registered successfully");
+    }
+)
+
+export const registerAdmin = asyncHandler(
+    async (req: Request, res: Response) => {
+        const body = req.body as AdminRegisterInput;
+        let {email, password, name, phoneNo} = body;
+
+        // normalizxe the input
+        email = email.trim().toLowerCase();
+        name = name.trim();
+        phoneNo = phoneNo.trim();
+
+        const result = await prisma.$transaction(async (tx) => {
+            // hash the pass
+            const hashedPass = await bcrypt.hash(password, 10);
+            // create user
+            const newUser = await tx.user.create({
+                data: {
+                    email,
+                    password: hashedPass,
+                    role: "ADMIN"
+                }
+            });
+
+            // create admin
+            const newAdmin = await tx.admin.create({
+                data: {
+                    name,
+                    phoneNo,
+                    userId: newUser.id
+                }
+            })
+        });
+
+        return sendResponse(res, 201, {}, "admin registered successfully");
+    }
+)
 
 
 

@@ -2,115 +2,104 @@
 import {prisma} from "../src/config/prisma.js";
 import { Role, Gender, AdmissionType } from "../generated/prisma/enums.js";
 
+
 async function main() {
-  // 1️⃣ USERS
+
+  console.log("Seeding started...");
+
+  // Department
+  const cseDept = await prisma.department.create({
+    data: {
+      name: "Computer Science and Engineering",
+      deptCode: "105"
+    }
+  });
+
+  const eceDept = await prisma.department.create({
+    data: {
+      name: "Electronics and Communication Engineering",
+      deptCode: "103"
+    }
+  });
+
+  // 2️⃣ Batch
+  const batch2023 = await prisma.batch.create({
+    data: { name: "2023-2027" }
+  });
+
+  const batch2024 = await prisma.batch.create({
+    data: { name: "2024-2028" }
+  });
+
+  // 3️⃣ Semester
+  await prisma.semester.createMany({
+    data: [
+      { number: 5, deptId: cseDept.id },
+      { number: 5, deptId: eceDept.id },
+    ]
+  });
+
+  //  Users 
   const adminUser = await prisma.user.create({
     data: {
       email: "admin@gmail.com",
-      password: "$2a$10$ray3.o/onmkDm9ZoI2.rfO/aDJ6kq71LgqqsR1P5UC9R50qpFuGZu",
-      role: Role.ADMIN,
-      updatedAt: new Date(),
-    },
-  });
-
-  const facultyUser = await prisma.user.create({
+      password: "$2a$10$fnHOyyam3FEFx/fJIg6w2OqHfPIDmbquEfs/cGX4G5Hjm.9Zp2zLm",
+      role: Role.ADMIN
+    }
+  })
+  const facultyUser1 = await prisma.user.create({
     data: {
-      email: "faculty@gmail.com",
-      password: "$2a$10$ray3.o/onmkDm9ZoI2.rfO/aDJ6kq71LgqqsR1P5UC9R50qpFuGZu",
-      role: Role.FACULTY,
-      updatedAt: new Date(),
-    },
+      email: "cse@gmail.com",
+      password: "$2a$10$fnHOyyam3FEFx/fJIg6w2OqHfPIDmbquEfs/cGX4G5Hjm.9Zp2zLm",
+      role: Role.FACULTY
+    }
   });
 
-  const studentUser = await prisma.user.create({
+  const facultyUser2 = await prisma.user.create({
     data: {
-      email: "student@gmail.com",
-      password: "$2a$10$ray3.o/onmkDm9ZoI2.rfO/aDJ6kq71LgqqsR1P5UC9R50qpFuGZu",
-      role: Role.STUDENT,
-      updatedAt: new Date(),
-    },
+      email: "ece@gmail.com",
+      password: "$2a$10$fnHOyyam3FEFx/fJIg6w2OqHfPIDmbquEfs/cGX4G5Hjm.9Zp2zLm",
+      role: Role.FACULTY
+    }
   });
 
-  // 2️⃣ DEPARTMENT
-  const department = await prisma.department.create({
-    data: {
-      name: "Computer Science",
-      deptCode: "105",
-      updatedAt: new Date(),
-    },
-  });
-
-  // 3️⃣ SEMESTERS
-  const semester1 = await prisma.semester.create({
-    data: {
-      number: 1,
-      deptId: department.id,
-      updatedAt: new Date(),
-    },
-  });
-
-  // 4️⃣ BATCH
-  const batch = await prisma.batch.create({
-    data: {
-      name: "2024-2028",
-      updatedAt: new Date(),
-    },
-  });
-
-  // 5️⃣ FACULTY
-  const faculty = await prisma.faculty.create({
+  // Faculty
+  await prisma.faculty.create({
     data: {
       name: "Saurav Kumar",
       phoneNo: "9876543210",
       regNo: "FAC001",
-      userId: facultyUser.id,
-      deptId: department.id,
-      updatedAt: new Date(),
-    },
+      userId: facultyUser1.id,
+      deptId: cseDept.id
+    }
   });
 
-  // 6️⃣ UPDATE HOD
-  await prisma.department.update({
-    where: { id: department.id },
-    data: { hodId: faculty.id },
+  await prisma.faculty.create({
+    data: {
+      name: "Aditya Kumar",
+      phoneNo: "9876543211",
+      regNo: "FAC002",
+      userId: facultyUser2.id,
+      deptId: eceDept.id
+    }
   });
 
-  // 7️⃣ ADMIN
+  // Admin
   await prisma.admin.create({
     data: {
-      name: "Admin Saurav",
-      phoneNo: "8888888888",
-      userId: adminUser.id,
-      updatedAt: new Date(),
-    },
-  });
+      name: "Saurav",
+      phoneNo: "6202404482",
+      userId: adminUser.id
+    }
+  })
 
-  // 8️⃣ STUDENT
-  await prisma.student.create({
-    data: {
-      name: "Aman Kumar",
-      phoneNo: "7777777777",
-      parentName: "Ramesh Kumar",
-      parentPhoneNo: "6666666666",
-      rollNo: "CSE001",
-      regNo: "2024CSE001",
-      gender: Gender.MALE,
-      hosteller: false,
-      admissionType: AdmissionType.REGULAR,
-      admissionDate: new Date(),
-      userId: studentUser.id,
-      deptId: department.id,
-      semId: semester1.id,
-      batchId: batch.id,
-      updatedAt: new Date(),
-    },
-  });
-
-  console.log("Seeding done 🚀");
+  console.log("Seeding completed");
 }
 
 main()
-  .catch(console.error)
+  .catch((e) => {
+    console.error(e);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });
