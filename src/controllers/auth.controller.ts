@@ -192,7 +192,6 @@ export const checkMe = asyncHandler(
                     id: true,
                     name: true,
                     phoneNo: true,
-                    regNo: true
                 }
             })
         } else {
@@ -223,13 +222,12 @@ export const registerFaculty = asyncHandler(
     async (req: Request, res: Response) => {
         const body = req.body as FacultyRegisterInput;
 
-        let {email, name, phoneNo, regNo, deptId, isHOD, password } = body;
+        let {email, name, phoneNo, deptId, isHOD, password } = body;
 
         // normalize the input
         email = email.trim().toLowerCase();
         name = name.trim();
-        phoneNo = phoneNo.trim(),
-        regNo = regNo.trim().toUpperCase();
+        phoneNo = phoneNo.trim();
 
         const result = await prisma.$transaction(async(tx) => {
 
@@ -260,7 +258,6 @@ export const registerFaculty = asyncHandler(
                 data: {
                     name,
                     phoneNo,
-                    regNo,
                     userId: newUser.id,
                     deptId
                 }

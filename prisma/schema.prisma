@@ -44,6 +44,12 @@ enum EntityType {
   QUIZ
 }
 
+enum UploadStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 
 model User {
   id Int @id @default(autoincrement())
@@ -52,7 +58,7 @@ model User {
   role Role
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   student Student?
   faculty Faculty?
@@ -68,7 +74,7 @@ model Department {
   name String @unique
   deptCode String @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
   isActive Boolean @default(true)
 
   hod Faculty? @relation("HOD",fields: [hodId], references: [id], onDelete: SetNull)
@@ -85,7 +91,7 @@ model Semester {
   number Int
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   dept Department @relation(fields: [deptId], references: [id])
   deptId Int
@@ -99,7 +105,7 @@ model Batch {
   id Int @id @default(autoincrement())
   name String @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   students Student[]
 }
@@ -120,7 +126,7 @@ model Student {
   admissionType AdmissionType
   admissionDate DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
   isActive Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id])
@@ -140,10 +146,9 @@ model Faculty {
   id Int @id @default(autoincrement())
   name String 
   phoneNo String @unique
-  regNo String @unique
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   user User @relation(fields: [userId], references: [id])
   userId Int @unique
@@ -160,7 +165,7 @@ model Admin {
   phoneNo String @unique
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   userId Int @unique
   user User @relation(fields: [userId], references: [id])
@@ -182,7 +187,7 @@ model File {
   studentUploadFile StudentUploadJob[]
   
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 
@@ -202,10 +207,10 @@ model StudentUploadJob {
   insertedRecords Int @default(0)
   failedRecords Int @default(0)
 
-  status String @default("PROCESSING")
+  status UploadStatus @default(PROCESSING)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
 
   validationFailures StudentVerificationFailure[]
   insertionFailures StudentInsertionFailure[]

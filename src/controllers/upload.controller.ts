@@ -16,14 +16,17 @@ export const getUploadUrl = asyncHandler(
         if(!presignedUrl)
             throw new ApiError(500, 'unable to generate presigned url');
 
+        if(!req.user?.id)
+            throw new ApiError(401, "User not authenticated");
+
         // store meta data in the db
         const file = await prisma.file.create({
             data: {
                 fileName: presignedUrl.url,
                 originalName: body.fileName,
-                s3Key: presignedUrl.url,
+                s3Key: presignedUrl.key,
                 mimeType: body.contentType,
-                ...(req.user?.id && { uploadedBy: req.user.id }),
+                uploadedBy: req.user.id,
                 size: Number(body.size)
             }
         });
