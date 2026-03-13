@@ -68,7 +68,6 @@ async function main() {
     data: {
       name: "Saurav Kumar",
       phoneNo: "9876543210",
-      regNo: "FAC001",
       userId: facultyUser1.id,
       deptId: cseDept.id
     }
@@ -78,7 +77,6 @@ async function main() {
     data: {
       name: "Aditya Kumar",
       phoneNo: "9876543211",
-      regNo: "FAC002",
       userId: facultyUser2.id,
       deptId: eceDept.id
     }
