@@ -4,23 +4,35 @@ import type { Request, Response } from 'express';
 import authRouter from './routes/auth.routes.js';
 import { globalErrorHandler } from './middlewares/error.middleware.js';
 import uploadRouter from './routes/upload.routes.js';
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from './config/swagger.js';
+import studentRouter from './routes/student.routes.js';
+import facultyRouter from './routes/faculty.routes.js';
+import cors from 'cors';
+import adminRouter from './routes/admin.routes.js';
 
 const app = express();
-// import cors from 'cors';
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+
+const corsOptions = {
+    origin: [
+        "https://gecshk.dev",
+        "https://www.gecshk.dev"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // routes
 app.use('/api/auth', authRouter);
-app.use('/api/upload', uploadRouter)
-
-
-
+app.use('/api/upload', uploadRouter);
+app.use('/api/student', studentRouter);
+app.use('/api/faculty', facultyRouter);
+app.use('/api/admin', adminRouter);
 
 
 app.use(globalErrorHandler);
