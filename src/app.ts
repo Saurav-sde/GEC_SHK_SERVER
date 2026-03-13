@@ -8,6 +8,7 @@ import studentRouter from './routes/student.routes.js';
 import facultyRouter from './routes/faculty.routes.js';
 import cors from 'cors';
 import adminRouter from './routes/admin.routes.js';
+import metaDataRouter from './routes/metaData.routes.js';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/upload', uploadRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/faculty', facultyRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/meta', metaDataRouter);
 
 
 app.use(globalErrorHandler);
