@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -b",
+    "build": "prisma generate && tsc -b",
     "start": "node dist/src/index.js",
-    "dev": "npm run build && npm run start"
+    "dev": "tsx src/index.ts",
+    "prisma:generate" : "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "test": "tsc -b && npm run start"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +19,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/node": "^25.2.3",
     "@types/pg": "^8.16.0",
+    "@types/cors": "^2.8.19",
     "prisma": "^7.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
