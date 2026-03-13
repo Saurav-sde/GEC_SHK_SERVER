@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import type { adminRegisterSchema, facultyRegisterSchema, studentRegisterSchema, userLoginSchema } from '../schemas/auth.schems.js';
+import type { adminRegisterSchema, facultyRegisterSchema, studentRegisterSchema, userLoginSchema } from '../schemas/auth.schema.js';
 
 
 
