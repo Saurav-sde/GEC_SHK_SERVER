@@ -1,5 +1,21 @@
 import { prisma } from "../config/prisma.js";
 
+// get students detail for admin panel
+export const getAllStudentForAdmin = async () => {
+    const allStudents = await getStudent({});
+    const newlyAdmittedStudent = await getCountOfNewlyAdmittedStudent();
+    const totalActiveStudents = await prisma.student.count({
+        where: {
+            isActive: true
+        }
+    });
+    return {
+        allStudents,
+        newlyAdmittedStudent,
+        totalActiveStudents
+    }
+}
+
 // get All student detail
 export const getStudent =  async (query:any) => {
     const {
@@ -62,7 +78,7 @@ export const getStudent =  async (query:any) => {
                 select: {id: true, name: true, deptCode: true}
             },
             batch: {
-                select: {id: true, name: true}
+                select: {id: true, startYear: true, endYear:true}
             }
         },
     });
@@ -96,6 +112,7 @@ export const getStudentById = async (studentId: number) => {
             hosteller: true,
             admissionDate: true,
             admissionType: true,
+            cgpa: true,
             dept: {
                 select: {
                     deptCode: true,
@@ -117,7 +134,8 @@ export const getStudentById = async (studentId: number) => {
             },
             batch: {
                 select: {
-                    name: true
+                    startYear: true,
+                    endYear: true
                 }
             }
         }
@@ -127,5 +145,27 @@ export const getStudentById = async (studentId: number) => {
         return null;
     return student;
 }
+
+// get count of newly admitted students details 
+export const getCountOfNewlyAdmittedStudent =  async() => {
+    const now = new Date();
+    const month = now.getMonth();
+    let year = now.getFullYear() % 100;
+
+    if(month < 7) 
+        year = year - 1;
+
+    const count = await prisma.student.count({
+        where: {
+            rollNo: {
+                startsWith: year.toString().padStart(2, '0')
+            }
+        }
+    })
+
+    return count;
+
+}
+
 
 // delete specific student
