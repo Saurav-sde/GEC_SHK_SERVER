@@ -52,7 +52,7 @@ export const loginUser = async (body: userLoginInput) => {
 
 export const registerStudent = async (body: StudentRegisterInput) => {
     let {
-        email, rollNo, regNo, name, parentName, parentPhoneNo, phoneNo, gender, hosteller, admissionDate, admissionType, deptId, semId, batchId
+        email, rollNo, regNo, name, parentName, parentPhoneNo, phoneNo, gender, hosteller, admissionDate, admissionType, deptId, semId, batchId, cgpa, section
     } = body;
 
     // normalize the input
@@ -66,51 +66,31 @@ export const registerStudent = async (body: StudentRegisterInput) => {
 
     const result = await prisma.$transaction(async (tx) => {
 
-        // check duplicate user
-        const existingUser = await tx.user.findUnique({
-            where: {
-                email
-            }
-        });
+        // check department exists or not
+        const department = await tx.department.findUnique({
+            where: {id: deptId}
+        })
+        if(!department)
+            throw new ApiError(400, "invalid department");
 
-        if (existingUser)
-            throw new ApiError(409, "email already exists");
-
-        // check duplicate student based on phoneNo or rollNo or regNo
-        const existingStudent = await tx.student.findFirst({
-            where: {
-                OR: [
-                    { phoneNo },
-                    { rollNo },
-                    ...(regNo ? [{ regNo }] : [])
-                ]
-            },
-        });
-
-        if (existingStudent)
-            throw new ApiError(409, "student data already exists");
-
-        // check semId exists in the db or not and it belongs to the same department or not
-        const semester = await tx.semester.findUnique({
-            where: { id: semId },
-        });
-
-        if (!semester || semester.deptId !== deptId) {
-            throw new ApiError(400, "invalid semester");
-        }
-
-        // check batch exists in the db or not
+        // check batch exists or not
         const batch = await tx.batch.findUnique({
             where: { id: batchId },
         });
-
-        if (!batch) {
+        if (!batch) 
             throw new ApiError(400, "invalid batch");
-        }
+
+        // check semester exists or not and belongs to the same dept or not
+        const semester = await tx.semester.findUnique({
+            where: { id: semId },
+        });
+        if (!semester || semester.deptId !== deptId) 
+            throw new ApiError(400, "invalid semester");
 
         // hash the pass
         const password = `Shk${rollNo}`;
         const hashedPassword = await bcrypt.hash(password, 10);
+
         // create user
         const newUser = await tx.user.create({
             data: {
@@ -119,6 +99,7 @@ export const registerStudent = async (body: StudentRegisterInput) => {
                 role: "STUDENT"
             }
         })
+
         // create student
         const newStudent = await tx.student.create({
             data: {
@@ -127,7 +108,7 @@ export const registerStudent = async (body: StudentRegisterInput) => {
                 parentName,
                 parentPhoneNo,
                 rollNo,
-                regNo: regNo ?? undefined,
+                regNo: regNo ?? null,
                 gender,
                 hosteller,
                 admissionDate,
@@ -135,16 +116,22 @@ export const registerStudent = async (body: StudentRegisterInput) => {
                 deptId,
                 semId,
                 batchId,
-                userId: newUser.id
+                userId: newUser.id,
+                cgpa: cgpa ?? null,
+                ...(section && { section })
             }
         });
+
+        return {newUser, newStudent};
     });
+
+    return result;
 }
 
 
 export const registerFaculty = async (body: FacultyRegisterInput) => {
 
-    let { email, name, phoneNo, deptId, isHOD, password } = body;
+    let { email, name, phoneNo, deptId, isHOD, password, designation, experience, specialization , bio} = body;
 
     // normalize the input
     email = email.trim().toLowerCase();
@@ -163,6 +150,10 @@ export const registerFaculty = async (body: FacultyRegisterInput) => {
         if (!dept)
             throw new ApiError(400, "invalid department");
 
+        // check if department already has hod or not
+        if(isHOD && dept.hodId)
+            throw new ApiError(400, "Department already has a HOD");
+
         // hash the pass
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -180,8 +171,12 @@ export const registerFaculty = async (body: FacultyRegisterInput) => {
             data: {
                 name,
                 phoneNo,
+                designation,
+                specialization,
+                experience, 
                 userId: newUser.id,
-                deptId
+                deptId,
+                bio: bio ?? null
             }
         })
 
@@ -196,7 +191,11 @@ export const registerFaculty = async (body: FacultyRegisterInput) => {
                 }
             })
         }
+
+        return {newUser, newFaculty}
     });
+
+    return result;
 }
 
 
