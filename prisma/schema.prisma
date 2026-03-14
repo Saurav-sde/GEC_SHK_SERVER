@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,6 +5,287 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  password         String
+  role             Role
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt
+  admin            Admin?
+  faculty          Faculty?
+  file             File[]
+  student          Student?
+  studentUploadJob StudentUploadJob[]
+}
+
+model Student {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  phoneNo           String              @unique
+  parentName        String
+  parentPhoneNo     String
+  rollNo            String              @unique
+  regNo             String?             @unique
+  section           String              @default("A")
+  gender            Gender
+  cgpa              Float?
+  hosteller         Boolean
+  admissionType     AdmissionType
+  admissionDate     DateTime
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now()) @updatedAt
+  isActive          Boolean             @default(true)
+  userId            Int                 @unique
+  deptId            Int
+  semId             Int
+  batchId           Int
+  courseResult      CourseResult[]
+  enrollment        Enrollment[]
+  semResult         SemesterResult[]
+  batch             Batch               @relation(fields: [batchId], references: [id])
+  dept              Department          @relation(fields: [deptId], references: [id])
+  sem               Semester            @relation(fields: [semId], references: [id])
+  user              User                @relation(fields: [userId], references: [id])
+  studentAssessment StudentAssessment[]
+}
+
+model Faculty {
+  id              Int              @id @default(autoincrement())
+  name            String
+  phoneNo         String           @unique
+  bio             String?
+  designation     Designation
+  specialization  String
+  experience      Int
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  userId          Int              @unique
+  deptId          Int
+  courseOfferings CourseOffering[]
+  hodDept         Department?      @relation("HOD")
+  dept            Department       @relation("FacultyDepartment", fields: [deptId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phoneNo   String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id                Int                @id @default(autoincrement())
+  fileName          String
+  originalName      String
+  s3Key             String             @unique
+  mimeType          String
+  size              Int?
+  uploadedBy        Int
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+  uploader          User               @relation(fields: [uploadedBy], references: [id])
+  studentUploadFile StudentUploadJob[]
+}
+
+model StudentUploadJob {
+  id                 Int                          @id @default(autoincrement())
+  uploadedBy         Int
+  fileId             Int
+  totalRecords       Int                          @default(0)
+  validRecords       Int                          @default(0)
+  invalidRecords     Int                          @default(0)
+  insertedRecords    Int                          @default(0)
+  failedRecords      Int                          @default(0)
+  status             UploadStatus                 @default(PROCESSING)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @default(now()) @updatedAt
+  insertionFailures  StudentInsertionFailure[]
+  file               File                         @relation(fields: [fileId], references: [id])
+  uploader           User                         @relation(fields: [uploadedBy], references: [id])
+  validationFailures StudentVerificationFailure[]
+}
+
+model StudentVerificationFailure {
+  id          Int              @id @default(autoincrement())
+  jobId       Int
+  rowNumber   Int
+  errorReason String
+  rawData     Json
+  createdAt   DateTime         @default(now())
+  job         StudentUploadJob @relation(fields: [jobId], references: [id])
+}
+
+model StudentInsertionFailure {
+  id          Int              @id @default(autoincrement())
+  jobId       Int
+  email       String?
+  rollNo      String?
+  regNo       String?
+  errorReason String
+  rawData     Json
+  createdAt   DateTime         @default(now())
+  job         StudentUploadJob @relation(fields: [jobId], references: [id])
+}
+
+model Department {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  deptCode  String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+  isActive  Boolean    @default(true)
+  hodId     Int?       @unique
+  courses   Course[]
+  hod       Faculty?   @relation("HOD", fields: [hodId], references: [id])
+  faculties Faculty[]  @relation("FacultyDepartment")
+  labs      Lab[]
+  semesters Semester[]
+  students  Student[]
+}
+
+model Semester {
+  id         Int              @id @default(autoincrement())
+  number     Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @default(now()) @updatedAt
+  deptId     Int
+  courses    Course[]
+  dept       Department       @relation(fields: [deptId], references: [id])
+  semResults SemesterResult[]
+  students   Student[]
+
+  @@unique([deptId, number])
+}
+
+model Batch {
+  id               Int              @id @default(autoincrement())
+  startYear        Int
+  endYear          Int
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @default(now()) @updatedAt
+  coursesOfferings CourseOffering[]
+  students         Student[]
+
+  @@unique([startYear, endYear])
+}
+
+model Lab {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  roomNo    String
+  capacity  Int
+  deptId    Int
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+  dept      Department @relation(fields: [deptId], references: [id])
+}
+
+model Course {
+  id               Int              @id @default(autoincrement())
+  courseCode       String           @unique
+  title            String
+  description      String?
+  credits          Int
+  deptId           Int
+  semId            Int
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @default(now()) @updatedAt
+  dept             Department       @relation(fields: [deptId], references: [id])
+  sem              Semester         @relation(fields: [semId], references: [id])
+  coursesOfferings CourseOffering[]
+}
+
+model CourseOffering {
+  id                  Int                   @id @default(autoincrement())
+  courseId            Int
+  facultyId           Int
+  batchId             Int
+  section             String                @default("A")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @default(now()) @updatedAt
+  assessmentComponent AssessmentComponent[]
+  batch               Batch                 @relation(fields: [batchId], references: [id])
+  course              Course                @relation(fields: [courseId], references: [id])
+  faculty             Faculty               @relation(fields: [facultyId], references: [id])
+  courseResult        CourseResult[]
+  enrollment          Enrollment[]
+
+  @@unique([courseId, batchId, section])
+}
+
+model Enrollment {
+  id               Int              @id @default(autoincrement())
+  studentId        Int
+  courseOfferingId Int
+  status           EnrollmentStatus @default(ACTIVE)
+  offering         CourseOffering   @relation(fields: [courseOfferingId], references: [id])
+  student          Student          @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, courseOfferingId])
+}
+
+model CourseResult {
+  id               Int            @id @default(autoincrement())
+  studentId        Int
+  courseOfferingId Int
+  internalMarks    Float?
+  endSemMarks      Float?
+  grade            Grade?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  courseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id])
+  student          Student        @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, courseOfferingId])
+}
+
+model SemesterResult {
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  semId        Int
+  sgpa         Float
+  totalCredits Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  sem          Semester @relation(fields: [semId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, semId])
+}
+
+model AssessmentComponent {
+  id                Int                 @id @default(autoincrement())
+  courseOfferingId  Int
+  name              String
+  maxMarks          Int?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now()) @updatedAt
+  courseOffering    CourseOffering      @relation(fields: [courseOfferingId], references: [id])
+  studentAssessment StudentAssessment[]
+}
+
+model StudentAssessment {
+  id          Int                 @id @default(autoincrement())
+  studentId   Int
+  componentId Int
+  marks       Float
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @default(now()) @updatedAt
+  component   AssessmentComponent @relation(fields: [componentId], references: [id])
+  student     Student             @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, componentId])
 }
 
 enum Role {
@@ -39,7 +314,7 @@ enum FileVisibility {
 enum EntityType {
   ADMISSION
   ATTENDANCE
-  COURSE 
+  COURSE
   ASSIGNMENT
   QUIZ
 }
@@ -50,200 +325,22 @@ enum UploadStatus {
   FAILED
 }
 
-
-model User {
-  id Int @id @default(autoincrement())
-  email String @unique
-  password String
-  role Role
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  student Student?
-  faculty Faculty?
-  admin Admin?
-
-  file File[]
-  studentUploadJob StudentUploadJob[]
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
 }
 
-// academic structure
-model Department {
-  id Int @id @default(autoincrement())
-  name String @unique
-  deptCode String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-  isActive Boolean @default(true)
-
-  hod Faculty? @relation("HOD",fields: [hodId], references: [id], onDelete: SetNull)
-  hodId Int? @unique
-
-  students Student[]
-  faculties Faculty[] @relation("FacultyDepartment")
-  semesters Semester[]
-
+enum Designation {
+  PROFESSOR
+  ASST_PROFESSOR
 }
 
-model Semester {
-  id Int @id @default(autoincrement())
-  number Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  dept Department @relation(fields: [deptId], references: [id])
-  deptId Int
-
-  students Student[]
-
-  @@unique([deptId, number])
-}
-
-model Batch {
-  id Int @id @default(autoincrement())
-  name String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  students Student[]
-}
-
-// users
-model Student {
-  id Int @id @default(autoincrement())
-  name String
-  phoneNo String @unique
-  parentName String
-  parentPhoneNo String 
-  rollNo String @unique
-  regNo String? @unique
-  section String @default("A")
-  gender Gender
-
-  hosteller Boolean
-  admissionType AdmissionType
-  admissionDate DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-  isActive Boolean @default(true)
-
-  user User @relation(fields: [userId], references: [id])
-  userId Int @unique
-
-  dept Department @relation(fields: [deptId], references: [id])
-  deptId Int 
-
-  sem Semester @relation(fields: [semId], references: [id])
-  semId Int 
-
-  batchId Int
-  batch Batch @relation(fields: [batchId], references: [id])
-}
-
-model Faculty {
-  id Int @id @default(autoincrement())
-  name String 
-  phoneNo String @unique
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-  userId Int @unique
-
-  dept Department @relation("FacultyDepartment", fields: [deptId], references: [id])
-  deptId Int
-
-  hodDept Department? @relation("HOD")
-}
-
-model Admin {
-  id Int @id @default(autoincrement())
-  name String
-  phoneNo String @unique
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  userId Int @unique
-  user User @relation(fields: [userId], references: [id])
-}
-
-
-model File {
-  id Int @id @default(autoincrement())
-
-  fileName String
-  originalName String
-  s3Key String @unique
-  mimeType String
-  size Int?
-
-  uploadedBy Int
-  uploader User @relation(fields: [uploadedBy], references: [id])
-
-  studentUploadFile StudentUploadJob[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-}
-
-
-model StudentUploadJob {
-  id Int @id @default(autoincrement())
-  
-  uploadedBy Int
-  uploader User @relation(fields: [uploadedBy], references: [id])
-
-  fileId Int
-  file File @relation(fields: [fileId], references: [id])
-
-  totalRecords Int @default(0)
-  validRecords Int @default(0)
-  invalidRecords Int @default(0)
-
-  insertedRecords Int @default(0)
-  failedRecords Int @default(0)
-
-  status UploadStatus @default(PROCESSING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-
-  validationFailures StudentVerificationFailure[]
-  insertionFailures StudentInsertionFailure[]
-}
-
-
-model StudentVerificationFailure {
-  id Int @id @default(autoincrement())
-
-  jobId Int
-  job StudentUploadJob @relation(fields: [jobId], references: [id])
-
-  rowNumber Int
-  errorReason String
-
-  rawData Json
-
-  createdAt DateTime @default(now())
-}
-
-
-model StudentInsertionFailure {
-  id Int @id @default(autoincrement())
-
-  jobId Int
-  job StudentUploadJob @relation(fields: [jobId], references: [id])
-
-  email String?
-  rollNo String?
-  regNo String?
-
-  errorReason String
-  rawData Json
-
-  createdAt DateTime @default(now())
+enum Grade {
+  A_PLUS
+  B
+  C
+  D
+  P
+  F
 }
