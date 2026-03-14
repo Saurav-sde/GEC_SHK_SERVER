@@ -1,6 +1,7 @@
 import {z} from 'zod';
 export const GenderEnum = z.enum(["MALE", "FEMALE", "TRANSGENDER"]);
 export const AdmissionTypeEnum = z.enum(["REGULAR", "LATERAL_ENTRY"]);
+export const DesignationEnum = z.enum(["PROFESSOR", "ASST_PROFESSOR"])
 
 const userSchema = z.object({
   email: z.string().email(),
@@ -40,9 +41,13 @@ export const facultyRegisterSchema = z.object({
       email: z.string().email(),
       password: z.string(),
       name: z.string().min(2),
+      bio: z.string(),
       phoneNo: z.string(),
       deptId: z.number(),
-      isHOD: z.boolean()
+      isHOD: z.boolean(),
+      designation: DesignationEnum,
+      experience: z.number(),
+      specialization: z.string()
     })
 });
 
