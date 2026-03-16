@@ -35,10 +35,10 @@ export const getStudentFormData = async() => {
         prisma.batch.findMany({
             select: {
                 id: true,
-                name: true
+                startYear: true
             },
             orderBy: {
-                name: "asc"
+                startYear: "asc"
             }
         })
     ]);
