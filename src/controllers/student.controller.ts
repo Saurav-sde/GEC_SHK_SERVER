@@ -32,7 +32,7 @@ export const getStudentById = asyncHandler(
             throw new ApiError(404, "student doesn't exist");
 
         if(req.user?.role === "STUDENT") {
-            if(req.user?.id != result?.user.id)
+            if(req.user?.id != result.student.user.id)
                 throw new ApiError(403, "no permission");
         }
 
