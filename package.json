@@ -7,7 +7,7 @@
     "build": "prisma generate && tsc -b",
     "start": "node dist/src/index.js",
     "dev": "tsx src/index.ts",
-    "prisma:generate" : "prisma generate",
+    "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "test": "tsc -b && npm run start"
   },
@@ -17,9 +17,9 @@
   "type": "module",
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
     "@types/node": "^25.2.3",
     "@types/pg": "^8.16.0",
-    "@types/cors": "^2.8.19",
     "prisma": "^7.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
@@ -28,6 +28,7 @@
     "@aws-sdk/client-s3": "^3.995.0",
     "@aws-sdk/client-sqs": "^3.995.0",
     "@aws-sdk/s3-request-presigner": "^3.995.0",
+    "@faker-js/faker": "^10.3.0",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@types/bcrypt": "^6.0.0",
