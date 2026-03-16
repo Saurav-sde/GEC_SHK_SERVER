@@ -5,6 +5,12 @@ import { sendResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
 
+export const getStudentsForAdmin = asyncHandler(
+    async (req:Request, res: Response) => {
+        const result = await studentService.getAllStudentForAdmin();
+        return sendResponse(res, 200, result, "data fetched successfully");
+    }
+)
 
 export const getStudent = asyncHandler(
     async (req:Request, res: Response) => {
@@ -26,7 +32,7 @@ export const getStudentById = asyncHandler(
             throw new ApiError(404, "student doesn't exist");
 
         if(req.user?.role === "STUDENT") {
-            if(req.user?.id != result?.user.id)
+            if(req.user?.id != result.student.user.id)
                 throw new ApiError(403, "no permission");
         }
 
